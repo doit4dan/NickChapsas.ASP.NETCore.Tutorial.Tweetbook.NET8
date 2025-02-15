@@ -17,20 +17,11 @@ namespace Tweetbook
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseMigrationsEndPoint();
-            }
-            else
-            {                
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
-
             var swaggerOptions = new SwaggerOptions();
             builder.Configuration.GetSection(nameof(SwaggerOptions)).Bind(swaggerOptions);
 
+            if (app.Environment.IsDevelopment())
+            {
             app.UseSwagger(option =>
             {
                 option.RouteTemplate = swaggerOptions.JsonRoute;
@@ -40,17 +31,14 @@ namespace Tweetbook
             {
                 option.SwaggerEndpoint(swaggerOptions.UiEndpoint, swaggerOptions.Description);
             });
+            }            
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
 
             app.UseAuthentication();
+            app.UseAuthorization();
 
-            app.UseRouting();
-
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");            
+            app.MapControllers();
 
             app.Run();
         }

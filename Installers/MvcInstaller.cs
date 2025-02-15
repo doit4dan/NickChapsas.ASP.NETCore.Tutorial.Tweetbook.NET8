@@ -16,10 +16,10 @@ namespace Tweetbook.Installers
             configuration.Bind(nameof(JwtSettings), jwtSettings);
             services.AddSingleton(jwtSettings);
           
-            //services.AddMvc();
-            services.AddControllers();
+            services.AddControllers(); // AddControllers instead of AddMvc
 
             // Add Authentication: Jwt Bearer Token
+            services.AddAuthorization();
             services.AddAuthentication(x =>
             {
                 x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -38,34 +38,36 @@ namespace Tweetbook.Installers
                     RequireExpirationTime = false,  // this would be reqd in Production scenario
                     ValidateLifetime = true
                 };
-
             });
 
             services.AddSwaggerGen(x =>
             {
                 x.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "Tweetbook API", Version = "v1" });
 
-                // refactored a bit from Nick's implementation
-                var jwtSecurityScheme = new OpenApiSecurityScheme
+                // refactored a bit from Nick's implementation to work w/ .NET 8                                                            
+                x.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
                 {
-                    BearerFormat = "JWT",
-                    Description = "JWT Authorization header using the bearer scheme",
-                    Name = "Authorization",
                     In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = JwtBearerDefaults.AuthenticationScheme,
-                    Reference = new OpenApiReference
-                    {
-                        Id = JwtBearerDefaults.AuthenticationScheme,
-                        Type = ReferenceType.SecurityScheme
-                    }
-                };
-
-                x.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
+                    Description = "Please enter a valid token",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = JwtBearerDefaults.AuthenticationScheme
+                });
 
                 x.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
-                    { jwtSecurityScheme, Array.Empty<string>() }
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                    Reference = new OpenApiReference
+                    {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = JwtBearerDefaults.AuthenticationScheme
+                            }
+                        },
+                        new string[] { }
+                    }
                 });
             });
         }
