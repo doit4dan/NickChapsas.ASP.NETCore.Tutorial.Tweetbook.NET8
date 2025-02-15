@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Collections.Generic;
 using System.Text;
 using Tweetbook.Options;
+using Tweetbook.Services;
 
 namespace Tweetbook.Installers
 {
@@ -15,30 +15,32 @@ namespace Tweetbook.Installers
             var jwtSettings = new JwtSettings();
             configuration.Bind(nameof(JwtSettings), jwtSettings);
             services.AddSingleton(jwtSettings);
-          
+
             services.AddControllers(); // AddControllers instead of AddMvc
+
+            services.AddScoped<IIdentityService, IdentityService>();
 
             // Add Authentication: Jwt Bearer Token
             services.AddAuthorization();
             services.AddAuthentication(x =>
-            {
-                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(x =>
-            {
-                x.SaveToken = true;
-                x.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings.Secret)),
-                    ValidateIssuer = false,         // this would be reqd in Production scenario
-                    ValidateAudience = false,       // this would be reqd in Production scenario
-                    RequireExpirationTime = false,  // this would be reqd in Production scenario
-                    ValidateLifetime = true
-                };
-            });
+                    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(x =>
+                {
+                    x.SaveToken = true;
+                    x.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings.Secret)),
+                        ValidateIssuer = false,         // this would be reqd in Production scenario
+                        ValidateAudience = false,       // this would be reqd in Production scenario
+                        RequireExpirationTime = false,  // this would be reqd in Production scenario
+                        ValidateLifetime = true
+                    };
+                });
 
             services.AddSwaggerGen(x =>
             {
@@ -60,8 +62,8 @@ namespace Tweetbook.Installers
                     {
                         new OpenApiSecurityScheme
                         {
-                    Reference = new OpenApiReference
-                    {
+                            Reference = new OpenApiReference
+                            {
                                 Type = ReferenceType.SecurityScheme,
                                 Id = JwtBearerDefaults.AuthenticationScheme
                             }
