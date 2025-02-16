@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Tweetbook.Domain;
 using Tweetbook.Options;
 
 namespace Tweetbook.Services
@@ -23,7 +24,7 @@ namespace Tweetbook.Services
         {
             var existingUser = await _userManager.FindByEmailAsync(email);
 
-            if(existingUser != null)
+            if (existingUser != null)
             {
                 return new Domain.AuthenticationResult
                 {
@@ -34,12 +35,12 @@ namespace Tweetbook.Services
             var newUser = new IdentityUser()
             {
                 Email = email,
-                UserName = email,                
-            }; 
+                UserName = email,
+            };
             // passed the password in below call to use Microsoft's default hashing which will automatically sort and hash using good/secure standard
             var createdUser = await _userManager.CreateAsync(newUser, password);
 
-            if(!createdUser.Succeeded)
+            if (!createdUser.Succeeded)
             {
                 return new Domain.AuthenticationResult
                 {
@@ -47,6 +48,36 @@ namespace Tweetbook.Services
                 };
             }
 
+            return GenerateAuthenticationResultForUser(newUser);
+        }
+
+        public async Task<Domain.AuthenticationResult> LoginAsync(string email, string password)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                return new Domain.AuthenticationResult
+                {
+                    Errors = new[] { "User does not exist" }
+                };
+            }
+
+            var userHasValidPassword = await _userManager.CheckPasswordAsync(user, password);
+
+            if(!userHasValidPassword)
+            {
+                return new Domain.AuthenticationResult
+                {
+                    Errors = new[] { "User/password combination is wrong" } // in real world scenario you might not want to give your users info on why the request failed
+                };
+            }
+
+            return GenerateAuthenticationResultForUser(user);
+        }
+
+        private AuthenticationResult GenerateAuthenticationResultForUser(IdentityUser newUser)
+        {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -69,6 +100,6 @@ namespace Tweetbook.Services
                 Success = true,
                 Token = tokenHandler.WriteToken(token)
             };
-        }
+        }        
     }
 }
