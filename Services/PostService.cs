@@ -48,5 +48,22 @@ namespace Tweetbook.Services
             var created = await _dataContext.SaveChangesAsync();
             return created > 0;
         }
+
+        public async Task<bool> UserOwnsPostAsync(Guid postId, string userId)
+        {
+            var post = await _dataContext.Posts.AsNoTracking().SingleOrDefaultAsync(x => x.Id == postId); // this will avoid conflicts since we are going to update/delete if post is valid
+
+            if(post == null)
+            {
+                return false;
+            }
+
+            if(post.UserId != userId)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

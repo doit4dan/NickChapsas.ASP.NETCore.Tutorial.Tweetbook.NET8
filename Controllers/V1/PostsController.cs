@@ -5,6 +5,7 @@ using Tweetbook.Contracts.V1;
 using Tweetbook.Contracts.V1.Requests;
 using Tweetbook.Contracts.V1.Responses;
 using Tweetbook.Domain;
+using Tweetbook.Extensions;
 using Tweetbook.Services;
 
 namespace Tweetbook.Controllers.V1
@@ -27,7 +28,7 @@ namespace Tweetbook.Controllers.V1
 
         [HttpGet(ApiRoutes.Posts.Get)]
         public async Task<IActionResult> Get([FromRoute]Guid postId)
-        {
+        {           
             var post = await _postService.GetPostByIdAsync(postId);
 
             if (post == null)
@@ -39,11 +40,16 @@ namespace Tweetbook.Controllers.V1
         [HttpPut(ApiRoutes.Posts.Update)]
         public async Task<IActionResult> Update([FromRoute] Guid postId, [FromBody] UpdatePostRequest request)
         {
-            var post = new Post()
+            bool userOwnsPost = await _postService.UserOwnsPostAsync(postId, HttpContext.GetUserId());
+
+            if(!userOwnsPost)
             {
-                Id = postId,
-                Name = request.Name
-            };
+                return BadRequest(new { error = "You do not own this post" }); // we will improve this in future
+            }
+
+            // we can refactor this, because if post does not exist, it will return above
+            var post = await _postService.GetPostByIdAsync(postId);
+            post.Name = request.Name;
 
             var updated = await _postService.UpdatePostAsync(post);
 
@@ -56,6 +62,13 @@ namespace Tweetbook.Controllers.V1
         [HttpDelete(ApiRoutes.Posts.Delete)]
         public async Task<IActionResult> Delete([FromRoute] Guid postId)
         {
+            bool userOwnsPost = await _postService.UserOwnsPostAsync(postId, HttpContext.GetUserId());
+
+            if (!userOwnsPost)
+            {
+                return BadRequest(new { error = "You do not own this post" }); // we will improve this in future
+            }
+
             var deleted = await _postService.DeletePostAsync(postId);
 
             if (deleted) // two ways to delete: Return Ok with full body of deleted item. Or you can return 204, no content
@@ -67,7 +80,11 @@ namespace Tweetbook.Controllers.V1
         [HttpPost(ApiRoutes.Posts.Create)]
         public async Task<IActionResult> Create([FromBody] CreatePostRequest request)
         {           
-            var post = new Post { Name = request.Name };
+            var post = new Post 
+            { 
+                Name = request.Name,
+                UserId = HttpContext.GetUserId()               
+            };
 
             await _postService.CreatePostAsync(post);
 

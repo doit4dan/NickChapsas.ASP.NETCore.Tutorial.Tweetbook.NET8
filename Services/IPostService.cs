@@ -9,5 +9,6 @@ namespace Tweetbook.Services
         Task<bool> CreatePostAsync(Post post);
         Task<bool> UpdatePostAsync(Post post);
         Task<bool> DeletePostAsync(Guid postId);
+        Task<bool> UserOwnsPostAsync(Guid postId, string userId);
     }
 }
