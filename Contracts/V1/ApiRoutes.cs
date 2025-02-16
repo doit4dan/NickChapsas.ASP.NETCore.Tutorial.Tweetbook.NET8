@@ -20,6 +20,8 @@
             public const string Login = Base + "/identity/login";        // this breaks restful principals by having verbs. This identity section should be in separate identity server. 
                                                                          // doesn't really need to be a rest api, he is doing this for simplicity in tutorial
             public const string Register = Base + "/identity/register";
+
+            public const string Refresh = Base + "/identity/refresh";
         }
     }
 }
