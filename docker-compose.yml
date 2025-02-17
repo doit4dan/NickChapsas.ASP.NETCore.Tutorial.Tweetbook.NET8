@@ -1,0 +1,25 @@
+networks:
+  localdev:
+    name: localdev
+
+services:
+  main-api:
+    build: Tweetbook/
+    restart: always
+    ports:
+      - 8000:8080      
+    depends_on:
+      - db-server
+    networks:
+      - localdev  
+  db-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest   # https://hub.docker.com/r/microsoft/mssql-server
+    container_name: db-server
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=DanTheMan095!!
+      - MSSQL_TCP_PORT=1433
+    ports:
+      - "1400:1433"
+    networks:
+      - localdev            
