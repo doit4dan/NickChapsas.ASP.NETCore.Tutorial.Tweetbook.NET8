@@ -15,13 +15,17 @@ namespace Tweetbook.Services
         }
 
         public async Task<List<Post>> GetPostsAsync()
-        {
-            return await _dataContext.Posts.ToListAsync();
+        {            
+            return await _dataContext.Posts
+                .Include(post => post.Tags)
+                .ToListAsync();
         }
 
         public async Task<Post?> GetPostByIdAsync(Guid postId)
         {           
-            return await _dataContext.Posts.SingleOrDefaultAsync(x => x.Id == postId);
+            return await _dataContext.Posts
+                .Include(post => post.Tags)
+                .SingleOrDefaultAsync(x => x.Id == postId);
         }
 
         public async Task<bool> UpdatePostAsync(Post post)
@@ -44,9 +48,9 @@ namespace Tweetbook.Services
 
         public async Task<bool> CreatePostAsync(Post post)
         {
-            await _dataContext.AddAsync(post);
-            var created = await _dataContext.SaveChangesAsync();
-            return created > 0;
+            await _dataContext.AddAsync(post);                        
+            var created = await _dataContext.SaveChangesAsync();                       
+            return created > 0;            
         }
 
         public async Task<bool> UserOwnsPostAsync(Guid postId, string userId)

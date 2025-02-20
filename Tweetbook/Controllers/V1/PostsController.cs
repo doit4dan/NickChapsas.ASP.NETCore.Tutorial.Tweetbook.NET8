@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Validations;
 using Tweetbook.Contracts.V1;
 using Tweetbook.Contracts.V1.Requests;
 using Tweetbook.Contracts.V1.Responses;
@@ -23,7 +24,16 @@ namespace Tweetbook.Controllers.V1
         [HttpGet(ApiRoutes.Posts.GetAll)]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(await _postService.GetPostsAsync());
+            var posts = await _postService.GetPostsAsync();
+            var response = new List<GetPostResponse>();
+            posts.ForEach(p => response.Add(new GetPostResponse
+            {
+                PostId = p.Id.ToString(),
+                Name = p.Name,
+                UserId = p.UserId,  
+                Tags = p.Tags.Select(t => new PostTagResponse { TagId = t.TagId.ToString(), TagName = t.TagName, PostId = t.PostId.ToString() }).ToList()
+            }));            
+            return Ok(response);
         }        
 
         [HttpGet(ApiRoutes.Posts.Get)]
@@ -34,7 +44,15 @@ namespace Tweetbook.Controllers.V1
             if (post == null)
                 return NotFound();
 
-            return Ok(post);
+            var response = new GetPostResponse
+            {
+                PostId = post.Id.ToString(),
+                Name = post.Name,
+                UserId = post.UserId,
+                Tags = post.Tags.Select(t => new PostTagResponse { TagId = t.TagId.ToString(), TagName = t.TagName, PostId = t.PostId.ToString() }).ToList()
+            };
+
+            return Ok(response);
         }                
 
         [HttpPut(ApiRoutes.Posts.Update)]
@@ -79,12 +97,22 @@ namespace Tweetbook.Controllers.V1
 
         [HttpPost(ApiRoutes.Posts.Create)]
         public async Task<IActionResult> Create([FromBody] CreatePostRequest request)
-        {           
-            var post = new Post 
-            { 
+        {
+            var userId = HttpContext.GetUserId();
+            var newPostId = Guid.NewGuid();
+            var post = new Post
+            {
+                Id = newPostId,
                 Name = request.Name,
-                UserId = HttpContext.GetUserId()               
+                UserId = userId                
             };
+            // add tags to post
+            request.Tags.ForEach(t => post.Tags.Add(new PostTag
+            {
+                PostId = newPostId,
+                TagName = t,
+                Tag = new Tag { Name = t, CreatorId = userId, CreatedOn = DateTime.UtcNow }
+            }));
 
             await _postService.CreatePostAsync(post);
 
