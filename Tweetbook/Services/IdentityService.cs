@@ -38,13 +38,16 @@ namespace Tweetbook.Services
                 };
             }
 
+            var newUserId = Guid.NewGuid();
             var newUser = new IdentityUser()
             {
+                Id = newUserId.ToString(),
                 Email = email,
                 UserName = email,
-            };
+            };            
+
             // passed the password in below call to use Microsoft's default hashing which will automatically sort and hash using good/secure standard
-            var createdUser = await _userManager.CreateAsync(newUser, password);
+            var createdUser = await _userManager.CreateAsync(newUser, password);            
 
             if (!createdUser.Succeeded)
             {
@@ -53,6 +56,9 @@ namespace Tweetbook.Services
                     Errors = createdUser.Errors.Select(x => x.Description)
                 };
             }
+
+            // save custom claims at user level 
+            await _userManager.AddClaimAsync(newUser, new Claim("tags.view", "true"));
 
             return await GenerateAuthenticationResultForUserAsync(newUser);
         }
@@ -177,15 +183,22 @@ namespace Tweetbook.Services
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email), // sub is typically used for User Id, in this case we are using email
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Unique ID for specific JWT, this is used for Token Invalidation
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim("id", user.Id)
+            };
+
+            // add custom claims which we saved/associated with user
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            claims.AddRange(userClaims);
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Email), // sub is typically used for User Id, in this case we are using email
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Unique ID for specific JWT, this is used for Token Invalidation
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                    new Claim("id", user.Id)
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.Add(_jwtSettings.TokenLifetime),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };

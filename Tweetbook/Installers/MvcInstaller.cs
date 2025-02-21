@@ -47,7 +47,13 @@ namespace Tweetbook.Installers
                 });
 
             // Authorization: What can users do after logging in
-            services.AddAuthorization();
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("TagViewer", builder => 
+                {
+                    builder.RequireClaim("tags.view", "true");
+                });
+            });
 
             services.AddSwaggerGen(x =>
             {
