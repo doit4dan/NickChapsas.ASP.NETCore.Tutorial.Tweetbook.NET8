@@ -33,7 +33,7 @@ namespace Tweetbook.Installers
             services.AddSingleton(tokenValidationParams);
 
             // Add Authentication: Jwt Bearer Token
-            services.AddAuthorization();
+            // Authentication: All about logging in
             services.AddAuthentication(x =>
                 {
                     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -45,6 +45,9 @@ namespace Tweetbook.Installers
                     x.SaveToken = true;
                     x.TokenValidationParameters = tokenValidationParams;
                 });
+
+            // Authorization: What can users do after logging in
+            services.AddAuthorization();
 
             services.AddSwaggerGen(x =>
             {
