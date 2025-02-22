@@ -14,6 +14,7 @@ namespace Tweetbook
 
             // Optimized and Clean Service Setup for DI
             builder.Services.InstallServicesInAssembly(builder.Configuration);
+            builder.Services.AddAutoMapper(typeof(Program));
 
             var app = builder.Build();
 

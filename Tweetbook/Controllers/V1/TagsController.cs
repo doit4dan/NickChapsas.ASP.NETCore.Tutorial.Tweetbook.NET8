@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tweetbook.Contracts.V1;
@@ -15,24 +16,19 @@ namespace Tweetbook.Controllers.V1
     public class TagsController : Controller
     {
         private readonly IPostService _postService;
+        private readonly IMapper _mapper;
 
-        public TagsController(IPostService postService)
+        public TagsController(IPostService postService, IMapper mapper)
         {
             _postService = postService;
+            _mapper = mapper;
         }
 
         [HttpGet(ApiRoutes.Tags.GetAll)]        
         public async Task<IActionResult> GetAll()
         {
-            var tags = await _postService.GetAllTagsAsync();
-            var tagResponses = tags
-                .Select(tag => new TagResponse
-                {
-                    Id = tag.Id,
-                    Name = tag.Name
-                }).ToList();                   
-            
-            return Ok(tagResponses);
+            var tags = await _postService.GetAllTagsAsync();                       
+            return Ok(_mapper.Map<List<TagResponse>>(tags));
         }
 
         [HttpGet(ApiRoutes.Tags.Get)]
@@ -42,7 +38,7 @@ namespace Tweetbook.Controllers.V1
             if (tag == null)
                 return NotFound();
 
-            return Ok(new TagResponse { Id = tag.Id, Name = tag.Name });
+            return Ok(_mapper.Map<TagResponse>(tag));
         }
 
         [HttpPost(ApiRoutes.Tags.Create)]
@@ -59,7 +55,7 @@ namespace Tweetbook.Controllers.V1
 
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUri = baseUrl + "/" + ApiRoutes.Tags.Get.Replace("{tagId}", tag.Id.ToString());
-            return Created(locationUri, new TagResponse { Id = tag.Id, Name = tag.Name });            
+            return Created(locationUri, _mapper.Map<TagResponse>(tag));            
         }
 
         [HttpPut(ApiRoutes.Tags.Update)]
@@ -72,7 +68,7 @@ namespace Tweetbook.Controllers.V1
             tag.Name = request.TagName;
             var updated = await _postService.UpdateTagAsync(tag);
             if (updated)
-                return Ok(new TagResponse { Id = tag.Id, Name = tag.Name });
+                return Ok(_mapper.Map<TagResponse>(tag));
 
             return NotFound();
         }
