@@ -23,6 +23,37 @@ namespace Tweetbook
                 var dbContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
 
                 await dbContext.Database.MigrateAsync();
+
+                // use role manager to create roles if they do not exist already
+                var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+                if(!await roleManager.RoleExistsAsync("Admin"))
+                {
+                    var adminRole = new IdentityRole("Admin");
+                    await roleManager.CreateAsync(adminRole);
+                }
+
+                if (!await roleManager.RoleExistsAsync("Poster"))
+                {
+                    var posterRole = new IdentityRole("Poster");
+                    await roleManager.CreateAsync(posterRole);
+                }
+
+                // use below after creating users to add to role
+                //var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+
+                //var adminUser = await userManager.FindByNameAsync("admin@test.com");
+
+                //if(adminUser != null)
+                //{
+                //    await userManager.AddToRoleAsync(adminUser, "Admin");
+                //}
+
+                //var posterUser = await userManager.FindByNameAsync("poster@test.com");               
+                //if(posterUser != null)
+                //{
+                //    await userManager.AddToRoleAsync(posterUser, "Poster");
+                //}
             }
 
             var swaggerOptions = new SwaggerOptions();

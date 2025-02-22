@@ -16,6 +16,7 @@ namespace Tweetbook.Installers
             services.AddDatabaseDeveloperPageExceptionFilter();
 
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>() // adds RoleManager in DI, can be extended as well if needed
                 .AddEntityFrameworkStores<DataContext>();
 
             // in-memory approach

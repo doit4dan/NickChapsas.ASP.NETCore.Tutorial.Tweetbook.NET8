@@ -47,13 +47,13 @@ namespace Tweetbook.Installers
                 });
 
             // Authorization: What can users do after logging in
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("TagViewer", builder => 
-                {
-                    builder.RequireClaim("tags.view", "true");
-                });
-            });
+            services.AddAuthorization();
+
+            // You can add policies by specifying options for Authorization
+            //services.AddAuthorization(options =>
+            //{
+            //    options.AddPolicy("Test", policy => policy.RequireRole(new string[] { "Admin" }));
+            //});
 
             services.AddSwaggerGen(x =>
             {

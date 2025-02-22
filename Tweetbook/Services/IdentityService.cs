@@ -196,6 +196,14 @@ namespace Tweetbook.Services
             var userClaims = await _userManager.GetClaimsAsync(user);
             claims.AddRange(userClaims);
 
+            // Nick didn't have to add this in his video or did not show it
+            // Not sure how to add multiple roles, I am assume you would add as an array maybe. 
+            var userRoles = await _userManager.GetRolesAsync(user);
+            if(userRoles.Any())
+            {
+                claims.Add(new Claim("role", userRoles[0]));
+            }            
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
