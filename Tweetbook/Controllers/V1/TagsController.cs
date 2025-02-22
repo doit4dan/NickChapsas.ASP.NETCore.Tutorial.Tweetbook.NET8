@@ -67,7 +67,8 @@ namespace Tweetbook.Controllers.V1
             return NotFound();
         }
 
-        [HttpDelete(ApiRoutes.Tags.Delete)]        
+        [HttpDelete(ApiRoutes.Tags.Delete)]
+        [Authorize(Policy = "MustWorkForApei")]
         public async Task<IActionResult> Delete([FromRoute] Guid tagId)
         {
             var deleted = await _postService.DeleteTagAsync(tagId);

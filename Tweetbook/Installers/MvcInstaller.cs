@@ -1,8 +1,10 @@
 ﻿
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Tweetbook.Authorization;
 using Tweetbook.Options;
 using Tweetbook.Services;
 
@@ -47,7 +49,16 @@ namespace Tweetbook.Installers
                 });
 
             // Authorization: What can users do after logging in
-            services.AddAuthorization();
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("MustWorkForApei", policy =>
+                {
+                    // You can add additional requirements to any given policy, e.g. Check for Claims/Roles
+                    policy.AddRequirements(new WorksForCompanyRequirement("apei.com"));
+                });
+            });
+
+            services.AddSingleton<IAuthorizationHandler, WorksForCompanyHandler>();
 
             // You can add policies by specifying options for Authorization
             //services.AddAuthorization(options =>
