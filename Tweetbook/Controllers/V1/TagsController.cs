@@ -9,7 +9,7 @@ using Tweetbook.Services;
 namespace Tweetbook.Controllers.V1
 {
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Poster")] // Roles accepts comma separated roles
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)] // Roles accepts comma separated roles
     public class TagsController : Controller
     {
         private readonly IPostService _postService;
@@ -41,8 +41,12 @@ namespace Tweetbook.Controllers.V1
             var userId = HttpContext.GetUserId();
             var tag = new Domain.Tag { Name = request.TagName, CreatedOn = DateTime.UtcNow, CreatorId = userId };
             
-            await _postService.CreateTagAsync(tag);
-            
+            var created = await _postService.CreateTagAsync(tag);
+            if(!created)
+            {
+                return BadRequest(new { error = "Unable to create tag" });
+            }
+
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUri = baseUrl + "/" + ApiRoutes.Tags.Get.Replace("{tagId}", tag.Id.ToString());
             return Created(locationUri, tag);            
@@ -63,8 +67,7 @@ namespace Tweetbook.Controllers.V1
             return NotFound();
         }
 
-        [HttpDelete(ApiRoutes.Tags.Delete)]
-        [Authorize(Roles = "Admin")]
+        [HttpDelete(ApiRoutes.Tags.Delete)]        
         public async Task<IActionResult> Delete([FromRoute] Guid tagId)
         {
             var deleted = await _postService.DeleteTagAsync(tagId);
