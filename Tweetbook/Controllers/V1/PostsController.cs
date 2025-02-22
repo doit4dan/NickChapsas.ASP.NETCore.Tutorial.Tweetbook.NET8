@@ -25,15 +25,14 @@ namespace Tweetbook.Controllers.V1
         public async Task<IActionResult> GetAll()
         {
             var posts = await _postService.GetPostsAsync();
-            var response = new List<GetPostResponse>();
-            posts.ForEach(p => response.Add(new GetPostResponse
-            {
-                PostId = p.Id.ToString(),
-                Name = p.Name,
-                UserId = p.UserId,  
-                Tags = p.Tags.Select(t => new PostTagResponse { TagId = t.TagId.ToString(), TagName = t.TagName, PostId = t.PostId.ToString() }).ToList()
-            }));            
-            return Ok(response);
+            var postResponses = posts.Select(post => new PostResponse
+            {                
+                Id = post.Id,
+                Name = post.Name,
+                UserId = post.UserId,
+                Tags = post.Tags.Select(x => new TagResponse { Id = x.TagId, Name = x.TagName }).ToList()
+            }).ToList();
+            return Ok(postResponses);
         }        
 
         [HttpGet(ApiRoutes.Posts.Get)]
@@ -44,15 +43,13 @@ namespace Tweetbook.Controllers.V1
             if (post == null)
                 return NotFound();
 
-            var response = new GetPostResponse
+            return Ok(new PostResponse()
             {
-                PostId = post.Id.ToString(),
+                Id = post.Id,
                 Name = post.Name,
                 UserId = post.UserId,
-                Tags = post.Tags.Select(t => new PostTagResponse { TagId = t.TagId.ToString(), TagName = t.TagName, PostId = t.PostId.ToString() }).ToList()
-            };
-
-            return Ok(response);
+                Tags = post.Tags.Select(x => new TagResponse { Id = x.TagId, Name = x.TagName }).ToList()
+            });
         }                
 
         [HttpPut(ApiRoutes.Posts.Update)]
@@ -67,12 +64,22 @@ namespace Tweetbook.Controllers.V1
 
             // we can refactor this, because if post does not exist, it will return above
             var post = await _postService.GetPostByIdAsync(postId);
+
+            if (post == null)
+                return NotFound();
+
             post.Name = request.Name;
 
             var updated = await _postService.UpdatePostAsync(post);
 
             if (updated)
-                return Ok(post);
+                return Ok(new PostResponse()
+                {
+                    Id = post.Id,
+                    Name = post.Name,
+                    UserId = post.UserId,
+                    Tags = post.Tags.Select(x => new TagResponse { Id = x.TagId, Name = x.TagName }).ToList()
+                });
 
             return NotFound();
         }
@@ -119,7 +126,13 @@ namespace Tweetbook.Controllers.V1
             // gives us absolute URL
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUri = baseUrl + "/" + ApiRoutes.Posts.Get.Replace("{postId}", post.Id.ToString());
-            var response = new PostResponse() { Id = post.Id };
+            var response = new PostResponse() 
+            { 
+                Id = post.Id,                
+                Name = post.Name,
+                UserId = post.UserId,
+                Tags = post.Tags.Select(x => new TagResponse { Id = x.TagId, Name = x.TagName }).ToList()
+            };
             return Created(locationUri, response);
         }
     }
