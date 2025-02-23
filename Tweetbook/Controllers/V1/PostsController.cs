@@ -30,7 +30,7 @@ namespace Tweetbook.Controllers.V1
         public async Task<IActionResult> GetAll()
         {
             var posts = await _postService.GetPostsAsync();            
-            return Ok(_mapper.Map<List<PostResponse>>(posts));
+            return Ok(new Response<List<PostResponse>>(_mapper.Map<List<PostResponse>>(posts)));
         }        
 
         [HttpGet(ApiRoutes.Posts.Get)]
@@ -42,7 +42,7 @@ namespace Tweetbook.Controllers.V1
             if (post == null)
                 return NotFound();
 
-            return Ok(_mapper.Map<PostResponse>(post));
+            return Ok(new Response<PostResponse>(_mapper.Map<PostResponse>(post)));
         }                
 
         [HttpPut(ApiRoutes.Posts.Update)]
@@ -66,7 +66,7 @@ namespace Tweetbook.Controllers.V1
             var updated = await _postService.UpdatePostAsync(post);
 
             if (updated)
-                return Ok(_mapper.Map<PostResponse>(post));
+                return Ok(new Response<PostResponse>(_mapper.Map<PostResponse>(post)));
 
             return NotFound();
         }
@@ -113,7 +113,7 @@ namespace Tweetbook.Controllers.V1
             // gives us absolute URL
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUri = baseUrl + "/" + ApiRoutes.Posts.Get.Replace("{postId}", post.Id.ToString());            
-            return Created(locationUri, _mapper.Map<PostResponse>(post));
+            return Created(locationUri, new Response<PostResponse>(_mapper.Map<PostResponse>(post)));
         }
     }
 }

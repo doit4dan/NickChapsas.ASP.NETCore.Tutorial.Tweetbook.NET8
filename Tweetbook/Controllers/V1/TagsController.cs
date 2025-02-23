@@ -33,7 +33,7 @@ namespace Tweetbook.Controllers.V1
         public async Task<IActionResult> GetAll()
         {
             var tags = await _postService.GetAllTagsAsync();                       
-            return Ok(_mapper.Map<List<TagResponse>>(tags));
+            return Ok(new Response<List<TagResponse>>(_mapper.Map<List<TagResponse>>(tags)));
         }
 
         [HttpGet(ApiRoutes.Tags.Get)]
@@ -43,7 +43,7 @@ namespace Tweetbook.Controllers.V1
             if (tag == null)
                 return NotFound();
 
-            return Ok(_mapper.Map<TagResponse>(tag));
+            return Ok(new Response<TagResponse>(_mapper.Map<TagResponse>(tag)));
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace Tweetbook.Controllers.V1
 
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUri = baseUrl + "/" + ApiRoutes.Tags.Get.Replace("{tagId}", tag.Id.ToString());
-            return Created(locationUri, _mapper.Map<TagResponse>(tag));            
+            return Created(locationUri, new Response<TagResponse>(_mapper.Map<TagResponse>(tag)));            
         }
 
         [HttpPut(ApiRoutes.Tags.Update)]
@@ -89,13 +89,13 @@ namespace Tweetbook.Controllers.V1
             tag.Name = request.TagName;
             var updated = await _postService.UpdateTagAsync(tag);
             if (updated)
-                return Ok(_mapper.Map<TagResponse>(tag));
+                return Ok(new Response<TagResponse>(_mapper.Map<TagResponse>(tag)));
 
             return NotFound();
         }
 
         [HttpDelete(ApiRoutes.Tags.Delete)]
-        [Authorize(Policy = "MustWorkForApei")]
+        //[Authorize(Policy = "MustWorkForApei")]
         public async Task<IActionResult> Delete([FromRoute] Guid tagId)
         {
             var deleted = await _postService.DeleteTagAsync(tagId);
