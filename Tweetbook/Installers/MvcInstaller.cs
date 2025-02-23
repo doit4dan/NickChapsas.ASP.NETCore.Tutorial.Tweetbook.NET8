@@ -1,10 +1,13 @@
 ﻿
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Tweetbook.Authorization;
+using Tweetbook.Filters;
 using Tweetbook.Options;
 using Tweetbook.Services;
 
@@ -18,7 +21,15 @@ namespace Tweetbook.Installers
             configuration.Bind(nameof(JwtSettings), jwtSettings);
             services.AddSingleton(jwtSettings);
 
-            services.AddControllers(); // AddControllers instead of AddMvc
+            // AddControllers instead of AddMvc                
+            services.AddControllers(options =>
+            {
+                options.Filters.Add<ValidationFilter>();
+            });
+
+            // Method used in Nick's tutorial has been deprecated
+            services.AddFluentValidationAutoValidation();
+            services.AddValidatorsFromAssemblyContaining<Program>();
 
             services.AddScoped<IIdentityService, IdentityService>();
 
