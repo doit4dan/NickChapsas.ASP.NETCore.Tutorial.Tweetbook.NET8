@@ -75,38 +75,7 @@ namespace Tweetbook.Installers
             //services.AddAuthorization(options =>
             //{
             //    options.AddPolicy("Test", policy => policy.RequireRole(new string[] { "Admin" }));
-            //});
-
-            services.AddSwaggerGen(x =>
-            {
-                x.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "Tweetbook API", Version = "v1" });
-
-                // refactored a bit from Nick's implementation to work w/ .NET 8                                                            
-                x.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
-                {
-                    In = ParameterLocation.Header,
-                    Description = "Please enter a valid token",
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.Http,
-                    BearerFormat = "JWT",
-                    Scheme = JwtBearerDefaults.AuthenticationScheme
-                });
-
-                x.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = JwtBearerDefaults.AuthenticationScheme
-                            }
-                        },
-                        new string[] { }
-                    }
-                });
-            });
+            //});            
         }
     }
 }
