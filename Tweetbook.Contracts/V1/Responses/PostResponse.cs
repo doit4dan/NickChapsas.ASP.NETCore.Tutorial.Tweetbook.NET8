@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations.Schema;
-using Tweetbook.Domain;
-
-namespace Tweetbook.Contracts.V1.Responses
+﻿namespace Tweetbook.Contracts.V1.Responses
 {
     public class PostResponse
     {

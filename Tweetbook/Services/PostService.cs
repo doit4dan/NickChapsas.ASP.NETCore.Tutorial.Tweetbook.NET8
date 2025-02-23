@@ -41,9 +41,20 @@ namespace Tweetbook.Services
             if (post == null)
                 return false;
 
+            DeletePostTagsForPostAsync(post);
+
             _dataContext.Posts.Remove(post);
             var deleted = await _dataContext.SaveChangesAsync();            
             return deleted > 0;
+        }
+
+        private void DeletePostTagsForPostAsync(Post post)
+        {
+            var postTags = _dataContext.PostTags.Where(x => x.Post == post);
+            if (postTags.Any())
+            {
+                _dataContext.RemoveRange(postTags);
+            }
         }
 
         public async Task<bool> CreatePostAsync(Post post)
@@ -98,19 +109,21 @@ namespace Tweetbook.Services
             var updated = await _dataContext.SaveChangesAsync();
             return updated > 0;
         }
+
         public async Task<bool> DeleteTagAsync(Guid tagId)
         {
             var tag = await GetTagByIdAsync(tagId);
             if (tag == null)
                 return false;
 
-            DeletePostTagsAsync(tag);
+            DeletePostTagsForTagAsync(tag);
 
             _dataContext.Remove(tag);
             var deleted = await _dataContext.SaveChangesAsync();
             return deleted > 0;
         }
-        private void DeletePostTagsAsync(Tag tag)
+
+        private void DeletePostTagsForTagAsync(Tag tag)
         {
             var postTags = _dataContext.PostTags.Where(x => x.Tag == tag);
             if(postTags.Any())
