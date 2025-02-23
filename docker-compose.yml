@@ -10,8 +10,10 @@ services:
       - 8000:8080      
     depends_on:
       - db-server
+      - redis
     networks:
       - localdev  
+
   db-server:
     image: mcr.microsoft.com/mssql/server:2022-latest   # https://hub.docker.com/r/microsoft/mssql-server
     container_name: db-server
@@ -22,4 +24,10 @@ services:
     ports:
       - "1400:1433"
     networks:
-      - localdev            
+      - localdev   
+ 
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
