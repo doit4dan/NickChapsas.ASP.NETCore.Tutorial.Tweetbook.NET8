@@ -14,25 +14,32 @@ namespace Tweetbook.Services
             _dataContext = dataContext;
         }
 
-        public async Task<List<Post>> GetPostsAsync(PaginationFilter? filter = null)
-        {           
-            if(filter == null)
+        public async Task<List<Post>> GetPostsAsync(GetAllPostsFilter? filter = null, PaginationFilter? paginationFilter = null)
+        {
+            var queryable = _dataContext.Posts.AsQueryable();
+
+            if (paginationFilter == null)
             {
                 //filter = new PaginationFilter();
-                return await _dataContext.Posts
+                return await queryable
                 .Include(post => post.Tags)
                 .ToListAsync();
             }
 
-            // formula to determine how many records we need to skip in DB
-            var skip = (filter.PageNumber - 1) * filter.PageSize;
+            if(filter != null)
+            {
+                queryable = AddFiltersOnQuery(filter, queryable);
+            }
 
-            return await _dataContext.Posts
+            // formula to determine how many records we need to skip in DB
+            var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+
+            return await queryable
                 .Include(post => post.Tags)
                 .Skip(skip)
-                .Take(filter.PageSize)
+                .Take(paginationFilter.PageSize)
                 .ToListAsync();
-        }
+        }        
 
         public async Task<Post?> GetPostByIdAsync(Guid postId)
         {           
@@ -59,16 +66,7 @@ namespace Tweetbook.Services
             _dataContext.Posts.Remove(post);
             var deleted = await _dataContext.SaveChangesAsync();            
             return deleted > 0;
-        }
-
-        private void DeletePostTagsForPostAsync(Post post)
-        {
-            var postTags = _dataContext.PostTags.Where(x => x.Post == post);
-            if (postTags.Any())
-            {
-                _dataContext.RemoveRange(postTags);
-            }
-        }
+        }        
 
         public async Task<bool> CreatePostAsync(Post post)
         {
@@ -136,6 +134,15 @@ namespace Tweetbook.Services
             return deleted > 0;
         }
 
+        private void DeletePostTagsForPostAsync(Post post)
+        {
+            var postTags = _dataContext.PostTags.Where(x => x.Post == post);
+            if (postTags.Any())
+            {
+                _dataContext.RemoveRange(postTags);
+            }
+        }
+
         private void DeletePostTagsForTagAsync(Tag tag)
         {
             var postTags = _dataContext.PostTags.Where(x => x.Tag == tag);
@@ -143,6 +150,15 @@ namespace Tweetbook.Services
             {
                 _dataContext.RemoveRange(postTags);                
             }
+        }
+
+        private static IQueryable<Post> AddFiltersOnQuery(GetAllPostsFilter filter, IQueryable<Post> queryable)
+        {
+            if (!string.IsNullOrEmpty(filter?.UserId))
+            {
+                queryable = queryable.Where(x => x.UserId == filter.UserId);
+            }
+            return queryable;
         }
     }
 }
