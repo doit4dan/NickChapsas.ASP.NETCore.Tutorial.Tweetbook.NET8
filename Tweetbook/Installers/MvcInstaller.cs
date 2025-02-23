@@ -76,6 +76,14 @@ namespace Tweetbook.Installers
             //{
             //    options.AddPolicy("Test", policy => policy.RequireRole(new string[] { "Admin" }));
             //});            
+
+            services.AddScoped<IUriService, UriService>(provider =>
+            {
+                var accessor = provider.GetRequiredService<IHttpContextAccessor>();
+                var request = accessor.HttpContext.Request;
+                var absoluteUri = string.Concat(request.Scheme, "://", request.Host.ToUriComponent(), "/"); // e.g. https://localhost:5001/
+                return new UriService(absoluteUri);
+            });
         }
     }
 }

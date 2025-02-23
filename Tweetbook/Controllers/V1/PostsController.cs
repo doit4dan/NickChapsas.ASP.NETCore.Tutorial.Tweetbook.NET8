@@ -2,13 +2,16 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.OpenApi.Validations;
 using Tweetbook.Cache;
 using Tweetbook.Contracts.V1;
 using Tweetbook.Contracts.V1.Requests;
+using Tweetbook.Contracts.V1.Requests.Queries;
 using Tweetbook.Contracts.V1.Responses;
 using Tweetbook.Domain;
 using Tweetbook.Extensions;
+using Tweetbook.Helpers;
 using Tweetbook.Services;
 
 namespace Tweetbook.Controllers.V1
@@ -18,19 +21,30 @@ namespace Tweetbook.Controllers.V1
     public class PostsController : Controller
     {
         private IPostService _postService;
+        private IUriService _uriService;
         private IMapper _mapper;
-        public PostsController(IPostService postService, IMapper mapper)
+        public PostsController(IPostService postService, IUriService uriService, IMapper mapper)
         {
             _postService = postService;
+            _uriService = uriService;
             _mapper = mapper;
         }
         
         [HttpGet(ApiRoutes.Posts.GetAll)]
         [Cached(600)]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery]PaginationQuery paginationQuery)
         {
-            var posts = await _postService.GetPostsAsync();            
-            return Ok(new Response<List<PostResponse>>(_mapper.Map<List<PostResponse>>(posts)));
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var posts = await _postService.GetPostsAsync(pagination);
+            var postsResponse = _mapper.Map<List<PostResponse>>(posts);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+            {
+                return Ok(new PagedResponse<PostResponse>(postsResponse));
+            }
+
+            var paginationResponse = PaginationHelpers.CreatePaginatedResponse<PostResponse>(_uriService, pagination, postsResponse);
+            return Ok(paginationResponse);
         }        
 
         [HttpGet(ApiRoutes.Posts.Get)]
@@ -111,8 +125,9 @@ namespace Tweetbook.Controllers.V1
             await _postService.CreatePostAsync(post);
 
             // gives us absolute URL
-            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-            var locationUri = baseUrl + "/" + ApiRoutes.Posts.Get.Replace("{postId}", post.Id.ToString());            
+            var locationUri = _uriService.GetPostUri(post.Id.ToString());
+            //var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
+            //var locationUri = baseUrl + "/" + ApiRoutes.Posts.Get.Replace("{postId}", post.Id.ToString());            
             return Created(locationUri, new Response<PostResponse>(_mapper.Map<PostResponse>(post)));
         }
     }
