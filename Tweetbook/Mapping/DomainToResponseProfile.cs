@@ -12,7 +12,11 @@ namespace Tweetbook.Mapping
                 .ForMember(dest => dest.Tags, opt =>
                     opt.MapFrom(src => src.Tags.Select(x => new TagResponse { Id = x.TagId, Name = x.TagName })));
 
-            CreateMap<Tag, TagResponse>();            
+            CreateMap<Tag, TagResponse>();
+
+            CreateMap<Domain.AuthenticationResult, AuthSuccessResponse>();
+
+            CreateMap<Domain.AuthenticationResult, AuthFailedResponse>();
         }
     }
 }

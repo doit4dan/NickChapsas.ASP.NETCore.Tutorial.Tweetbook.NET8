@@ -1,4 +1,5 @@
-﻿using Azure.Core;
+﻿using AutoMapper;
+using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
 using Tweetbook.Contracts.V1;
 using Tweetbook.Contracts.V1.Requests;
@@ -11,10 +12,12 @@ namespace Tweetbook.Controllers.V1
     public class IdentityController : Controller
     {
         private readonly IIdentityService _identityService;
+        private readonly IMapper _mapper;
 
-        public IdentityController(IIdentityService identityService)
+        public IdentityController(IIdentityService identityService, IMapper mapper)
         {
             _identityService = identityService;
+            _mapper = mapper;
         }
 
         [HttpPost(ApiRoutes.Identity.Register)]
@@ -24,17 +27,10 @@ namespace Tweetbook.Controllers.V1
 
             if (!authResponse.Success)
             {
-                return BadRequest(new AuthFailedResponse
-                {
-                    Errors = authResponse.Errors
-                });
+                return BadRequest(_mapper.Map<AuthFailedResponse>(authResponse));
             }
 
-            return Ok(new AuthSuccessResponse
-            {
-                Token = authResponse.Token,
-                RefreshToken = authResponse.RefreshToken
-            });
+            return Ok(_mapper.Map<AuthSuccessResponse>(authResponse));
         }
 
         [HttpPost(ApiRoutes.Identity.Login)]
@@ -52,17 +48,10 @@ namespace Tweetbook.Controllers.V1
 
             if (!authResponse.Success)
             {
-                return BadRequest(new AuthFailedResponse
-                {
-                    Errors = authResponse.Errors
-                });
+                return BadRequest(_mapper.Map<AuthFailedResponse>(authResponse));
             }
 
-            return Ok(new AuthSuccessResponse
-            {
-                Token = authResponse.Token,
-                RefreshToken = authResponse.RefreshToken
-            });
+            return Ok(_mapper.Map<AuthSuccessResponse>(authResponse));
         }
 
         [HttpPost(ApiRoutes.Identity.Refresh)]
@@ -72,17 +61,10 @@ namespace Tweetbook.Controllers.V1
 
             if (!authResponse.Success)
             {
-                return BadRequest(new AuthFailedResponse
-                {
-                    Errors = authResponse.Errors
-                });
+                return BadRequest(_mapper.Map<AuthFailedResponse>(authResponse));
             }
 
-            return Ok(new AuthSuccessResponse
-            {
-                Token = authResponse.Token,
-                RefreshToken = authResponse.RefreshToken
-            });
+            return Ok(_mapper.Map<AuthSuccessResponse>(authResponse));
         }
     }
 }
