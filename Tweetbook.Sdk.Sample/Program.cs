@@ -1,5 +1,6 @@
 ﻿using Refit;
 using Tweetbook.Contracts.V1.Requests;
+using Tweetbook.Contracts.V1.Requests.Queries;
 
 namespace Tweetbook.Sdk.Sample
 {
@@ -30,9 +31,7 @@ namespace Tweetbook.Sdk.Sample
             });
 
             // in real system, you would want to check if token is invalid. If so, have it call login endpoint to refresh token
-            cachedToken = loginResponse.Content.Token;
-
-            var allPosts = await tweetBookApi.GetAllAsync();
+            cachedToken = loginResponse.Content.Token;            
 
             var createdPost = await tweetBookApi.CreateAsync(new CreatePostRequest
             {
@@ -40,14 +39,27 @@ namespace Tweetbook.Sdk.Sample
                 Tags = new List<string>{ "sdk" }
             });
 
-            var retrievedPost = await tweetBookApi.GetAsync(createdPost.Content.Id);
+            var retrievedPost = await tweetBookApi.GetAsync(createdPost.Content.Data.Id);
 
-            var updatedPost = await tweetBookApi.UpdateAsync(createdPost.Content.Id, new UpdatePostRequest
+            var updatedPost = await tweetBookApi.UpdateAsync(createdPost.Content.Data.Id, new UpdatePostRequest
             {
                 Name = "This is updated by the SDK"
             });
 
-            var deletePost = await tweetBookApi.DeleteAsync(createdPost.Content.Id);
+            var query = new GetAllPostsQuery
+            {
+                UserId = loginResponse.Content.UserId
+            };
+
+            var pageQuery = new PaginationQuery
+            {
+                PageNumber = 1,
+                PageSize = 1
+            };
+
+            var allPosts = await tweetBookApi.GetAllAsync(query, pageQuery);
+
+            var deletePost = await tweetBookApi.DeleteAsync(createdPost.Content.Data.Id);
         }
     }
 }
