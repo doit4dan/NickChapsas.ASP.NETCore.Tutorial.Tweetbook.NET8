@@ -16,19 +16,13 @@ namespace Tweetbook.Services
 
         public async Task<List<Post>> GetPostsAsync(GetAllPostsFilter? filter = null, PaginationFilter? paginationFilter = null)
         {
-            var queryable = _dataContext.Posts.AsQueryable();
+            var queryable = AddPostFiltersOnQuery(filter, _dataContext.Posts.AsQueryable());                                   
 
             if (paginationFilter == null)
             {
-                //filter = new PaginationFilter();
                 return await queryable
                 .Include(post => post.Tags)
                 .ToListAsync();
-            }
-
-            if(filter != null)
-            {
-                queryable = AddFiltersOnQuery(filter, queryable);
             }
 
             // formula to determine how many records we need to skip in DB
@@ -92,9 +86,22 @@ namespace Tweetbook.Services
             return true;
         }
 
-        public async Task<List<Tag>> GetAllTagsAsync()
+        public async Task<List<Tag>> GetAllTagsAsync(GetAllTagsFilter? filter = null, PaginationFilter? paginationFilter = null)
         {
-            return await _dataContext.Tags.ToListAsync();
+            var queryable = AddTagFiltersOnQuery(filter, _dataContext.Tags.AsQueryable());                       
+
+            if (paginationFilter == null)
+            {
+                return await queryable.ToListAsync();
+            }
+
+            // formula to determine how many records we need to skip in DB
+            var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+
+            return await queryable
+                .Skip(skip)
+                .Take(paginationFilter.PageSize)
+                .ToListAsync();
         }
 
         public async Task<bool> CreateTagAsync(Tag tag)
@@ -152,11 +159,24 @@ namespace Tweetbook.Services
             }
         }
 
-        private static IQueryable<Post> AddFiltersOnQuery(GetAllPostsFilter filter, IQueryable<Post> queryable)
+        private static IQueryable<Post> AddPostFiltersOnQuery(GetAllPostsFilter? filter, IQueryable<Post> queryable)
         {
             if (!string.IsNullOrEmpty(filter?.UserId))
             {
                 queryable = queryable.Where(x => x.UserId == filter.UserId);
+            }
+            return queryable;
+        }
+
+        private static IQueryable<Tag> AddTagFiltersOnQuery(GetAllTagsFilter? filter, IQueryable<Tag> queryable)
+        {
+            if (!string.IsNullOrEmpty(filter?.Name))
+            {
+                queryable = queryable.Where(x => x.Name == filter.Name);
+            }
+            if (!string.IsNullOrEmpty(filter?.NameContains))
+            {
+                queryable = queryable.Where(x => x.Name.Contains(filter.NameContains));
             }
             return queryable;
         }

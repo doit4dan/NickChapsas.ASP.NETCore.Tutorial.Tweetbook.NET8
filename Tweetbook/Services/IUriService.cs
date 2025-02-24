@@ -7,5 +7,9 @@ namespace Tweetbook.Services
         Uri GetPostUri(string postId);
 
         Uri GetAllPostsUri(PaginationQuery? paginationQuery = null);
+
+        Uri GetTagUri(string tagId);
+
+        Uri GetAllTagsUri(PaginationQuery? paginationQuery = null);
     }
 }

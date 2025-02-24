@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tweetbook.Contracts.V1;
 using Tweetbook.Contracts.V1.Requests;
+using Tweetbook.Contracts.V1.Requests.Queries;
 using Tweetbook.Contracts.V1.Responses;
 using Tweetbook.Domain;
 using Tweetbook.Extensions;
+using Tweetbook.Helpers;
 using Tweetbook.Services;
 
 namespace Tweetbook.Controllers.V1
@@ -17,11 +19,13 @@ namespace Tweetbook.Controllers.V1
     public class TagsController : Controller
     {
         private readonly IPostService _postService;
+        private readonly IUriService _uriService;
         private readonly IMapper _mapper;
 
-        public TagsController(IPostService postService, IMapper mapper)
+        public TagsController(IPostService postService, IUriService uriService, IMapper mapper)
         {
             _postService = postService;
+            _uriService = uriService;
             _mapper = mapper;
         }
 
@@ -30,10 +34,20 @@ namespace Tweetbook.Controllers.V1
         /// </summary>
         /// <response code="200">Returns all the tags in the system</response>
         [HttpGet(ApiRoutes.Tags.GetAll)]        
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery]GetAllTagsQuery query, [FromQuery]PaginationQuery paginationQuery)
         {
-            var tags = await _postService.GetAllTagsAsync();                       
-            return Ok(new Response<List<TagResponse>>(_mapper.Map<List<TagResponse>>(tags)));
+            var filter = _mapper.Map<GetAllTagsFilter>(query);
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);            
+            var tags = await _postService.GetAllTagsAsync(filter, pagination);
+            var tagsResponse = _mapper.Map<List<TagResponse>>(tags);
+
+            if(pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+            {
+                return Ok(new PagedResponse<TagResponse>(tagsResponse));
+            }
+
+            var paginatedResponse = PaginationHelpers.CreatePaginatedResponse<TagResponse>(_uriService, pagination, tagsResponse);
+            return Ok(paginatedResponse);
         }
 
         [HttpGet(ApiRoutes.Tags.Get)]
@@ -73,9 +87,9 @@ namespace Tweetbook.Controllers.V1
                     } 
                 });
             }
-
-            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-            var locationUri = baseUrl + "/" + ApiRoutes.Tags.Get.Replace("{tagId}", tag.Id.ToString());
+            var locationUri = _uriService.GetTagUri(tag.Id.ToString());
+            //var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
+            //var locationUri = baseUrl + "/" + ApiRoutes.Tags.Get.Replace("{tagId}", tag.Id.ToString());
             return Created(locationUri, new Response<TagResponse>(_mapper.Map<TagResponse>(tag)));            
         }
 

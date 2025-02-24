@@ -10,13 +10,29 @@ namespace Tweetbook.Helpers
     {
         public static PagedResponse<T> CreatePaginatedResponse<T>(IUriService uriService, PaginationFilter pagination, List<T> response)
         {
-            var nextPage = pagination.PageNumber >= 1 ? uriService
-                .GetAllPostsUri(new PaginationQuery(pagination.PageNumber + 1, pagination.PageSize)).ToString()
-                : null;
+            string? nextPage = null;
+            string? prevPage = null;
 
-            var prevPage = pagination.PageNumber - 1 >= 1 ? uriService
-                .GetAllPostsUri(new PaginationQuery(pagination.PageNumber - 1, pagination.PageSize)).ToString()
-                : null;
+            if(typeof(T) == typeof(PostResponse))
+            {
+                nextPage = pagination.PageNumber >= 1 ? uriService
+                    .GetAllPostsUri(new PaginationQuery(pagination.PageNumber + 1, pagination.PageSize)).ToString()
+                    : null;
+
+                prevPage = pagination.PageNumber - 1 >= 1 ? uriService
+                    .GetAllPostsUri(new PaginationQuery(pagination.PageNumber - 1, pagination.PageSize)).ToString()
+                    : null;
+            }
+            else if(typeof(T) == typeof(TagResponse))
+            {
+                nextPage = pagination.PageNumber >= 1 ? uriService
+                    .GetAllTagsUri(new PaginationQuery(pagination.PageNumber + 1, pagination.PageSize)).ToString()
+                    : null;
+
+                prevPage = pagination.PageNumber - 1 >= 1 ? uriService
+                    .GetAllTagsUri(new PaginationQuery(pagination.PageNumber - 1, pagination.PageSize)).ToString()
+                    : null;
+            }            
 
             return new PagedResponse<T>
             {

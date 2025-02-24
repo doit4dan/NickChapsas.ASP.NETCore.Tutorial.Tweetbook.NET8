@@ -32,5 +32,25 @@ namespace Tweetbook.Services
 
             return new Uri(modifiedUri);
         }
+
+        public Uri GetTagUri(string tagId)
+        {
+            return new Uri(_baseUri + ApiRoutes.Tags.Get.Replace("{tagId}", tagId));
+        }
+
+        public Uri GetAllTagsUri(PaginationQuery? pagination = null)
+        {
+            var uri = new Uri(_baseUri + ApiRoutes.Tags.GetAll);
+
+            if (pagination == null)
+            {
+                return uri;
+            }
+
+            var modifiedUri = QueryHelpers.AddQueryString(uri.ToString(), "pageNumber", pagination.PageNumber.ToString());
+            modifiedUri = QueryHelpers.AddQueryString(modifiedUri, "pageSize", pagination.PageSize.ToString());
+
+            return new Uri(modifiedUri);
+        }
     }
 }

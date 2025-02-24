@@ -10,6 +10,7 @@ namespace Tweetbook.Mapping
         {
             CreateMap<PaginationQuery, PaginationFilter>();
             CreateMap<GetAllPostsQuery, GetAllPostsFilter>();
+            CreateMap<GetAllTagsQuery, GetAllTagsFilter>();
         }
     }
 }
